@@ -2,6 +2,8 @@ March 20
 
 ## Files for midterm
 
+This memo and all of the files used in class on March 20 can be accessed at <https://github.com/MA615-415-Spring-2025/class-15---Mar-20>
+
 In class today, I modified the midterm project to reduce the amount of repetitive work while keeping the key challenges I want you to tackle. I also moved the due date back to Thursday, March 27, giving you two class sessions to ask questions as you complete the work.
 
 To complete the assignment, focus on strawberries grown in California and Florida only and explore these issues:
