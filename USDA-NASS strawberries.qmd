@@ -1,107 +1,41 @@
 ---
 title: "MA415 Midterm Project"
-date: "2025 March 6"
-format: 
-  html:
-    embed-resources: true
+author: "Kristen Bestavros"
+date: "2025-03-27"
+format:
+  pdf: default
+execute:
+  echo: false
 editor: visual
 ---
 
-# EDA: Preparing Strawberry data for analysis
+## Midterm Project: Analyzing Strawberries in Florida and California
 
-Due: March 21
+This project explores chemical usage and strawberry production patterns in California and Florida using USDA NASS data. Our focus is twofold: first, to compare conventional chemical usage practices across states, and second, to investigate yield, price, and revenue differences for organic strawberries. The analysis incorporates survey and census data from 2021 and 2023.
 
-As described in class, this document is a starter for the Midterm project.
+We start with data cleaning and preparation, which involves reading the data from the CSV, splitting census and survey data, aggregating by state, and a few other data processing steps that will make things easier later. Once data cleaning is complete, we will start the assignment by comparing chemical usage on strawberries in Florida and California.
 
-Your assignment is to clean, organize, and explore the data. Turn in a report that describes how your work has set the stage for further analysis and model building.
-
-The dataset contains strawberry farming data with details about conventional and organic cultivation. These data include information about chemicals used in strawberry farming, as well as sales, revenue and expense details.
-
-While there is no "right answer" for this assignment, there are characteristics for the report that are essential. For example, sata visualization is critical. So is producing tabular presentations and document structure. Your target audience consists of analysts who may take the next steps with the data analysis and modeling.
-
-Think of your report as a stage on which to showcase your ability to use R to work with data and produce professional reports. This is an opportunity to do some data storytelling.
-
-Submit your report on or before March 21 using the Midterm portal on Blackboard.
-
-## Introduction: foundations
-
-Before we begin to work with the strawberry data, let's talk about how we will approach the work.
-
-### Data cleaning and organization
-
-Cleaning and organizing data for analysis is an essential skill for data scientists. Serious data analyses must be presented with the data on which the results depend. The credibility of data analysis and modelling depends on the care taken in data preparation and organization.
-
-#### References
-
-In their handbook ["An introduction to data cleaning with R" by Edwin de Jonge and Mark van der Loo](https://cran.r-project.org/doc/contrib/de_Jonge+van_der_Loo-Introduction_to_data_cleaning_with_R.pdf), de Jonge and van der Loo go into detail about specific data cleaning isssues and how to handle them in R.
-
-["Problems, Methods, and Challenges in Comprehensive Data Cleansing" by Heiko Müller and Johann-Christoph Freytag](https://www.researchgate.net/profile/Heiko-Mueller/publication/228929938_Problems_methods_and_challenges_in_comprehensive_data_cleansing/links/09e415101b58541e2c000000/Problems-methods-and-challenges-in-comprehensive-data-cleansing.pdf) is a good companion to the de Jonge and van der Loo handbook, offering additional issues in their discussion.
-
-### Attitudes
-
-Mechanistic descriptions of data cleaning methods are insufficient.
-
-#### Data is the product (or by-product) of purposeful human activity
-
-Much of the data used in analysis accessed on local databases or online which may create the impression that the data have been carefully curated. Beware. Data are produced by people for a purpose, with a point-of-view, and at a time and location that may affect the data. The provenance and lineage of the data are meta data you should include when reporting analysis. Data collection is purposeful human activity with all of the risks and weaknesses that are part of any purposeful human activity.
-
-#### Data is language
-
-Data has meaning. Data can be included in sentences related to the meaning of the data. Cleaning and organizing data should be informed by the meaning the data convey and how that meaning relates to the research you are doing do achieve this important result.
-
--   Immerse yourself in the data. Put data into context.
-
--   Visualize the data to find problems, confirm your understandings, and plan your data organization. People do a bad job of seeing meaningful patterns in data but a good job of seeing patterns of all kinds when data are rendered as plots. As you product and show visualizations, ask your self and those who view your presentations, "what do you see?" and "what do you wonder?"
-
-## Example: Strawberries
-
-### Public information
-
-[WHO says strawberries may not be so safe for you--2017March16](https://med.news.am/eng/news/13621/who-says-strawberries-may-not-be-so-safe-for-you.html)
-
-[Pesticides + poison gases = cheap, year-round strawberries 2019March20](https://www.ewg.org/foodnews/strawberries.php)
-
-[Multistate Outbreak of Hepatitis A Virus Infections Linked to Fresh Organic Strawberries-2022March5](https://www.cdc.gov/hepatitis/outbreaks/fresh-strawberries-2022/?CDC_AAref_Val=https://www.cdc.gov/hepatitis/outbreaks/2022/hav-contaminated-food/index.htm)
-
-[Strawberry makes list of cancer-fighting foods-2023May31](https://issuu.com/mechlocal/docs/053123_mech_asf/s/25386339)
-
-## What is the question?
-
--   Where they are grown? By whom?
-
--   Are they really loaded with carcinogenic poisons?
-
--   Are they really good for your health? Bad for your health?
-
--   Are organic strawberries carriers of deadly diseases?
-
--   When I go to the market should I buy conventional or organic strawberries?
-
-## The data
-
-The data set for this assignment has been selected from:
-
-[strawberries 2025march6](https://va-dmz-quickstats.va-dmz-asev3.appserviceenvironment.us/results/B40FC8C0-E9E1-3F96-B259-DC65147DA53B)
-
-<!-- and has been stored on the blackboard as strawberries25_v3.csv. -->
-
-## USDA NASS
+## Data Prep
 
 ```{r}
 #| label: load libraries
 #| warning: false
 #| message: false
 
+
 library(knitr)  
 library(kableExtra)
 library(tidyverse)
 library(stringr)
+library(dplyr)
+library(ggrepel)
+library(scales)
+library(GGally)
 ```
 
-## Read the file
-
 ```{r}
-#| label: read data - glimpse 
+#| label: read data - glimpse
+#| warning: false
 
 
 strawberry <- read_csv("strawb_mar6.csv", 
@@ -110,24 +44,7 @@ strawberry <- read_csv("strawb_mar6.csv",
 
 source("my_functions.R")
 
-```
-
-Examine the data. How is it organized?
-
-```{r}
-
 strawb <- strawberry |> drop_one_value_col()
-
-
-```
-
-```{r}
-#| label: explore strawb data
-
-# assume data is a tibble
-# n_show is the number of rows to show
-
-
 
 show_unique <- function(data, nrows=10 ){
   # make a tibble items to hold the data to show
@@ -160,14 +77,11 @@ show_unique <- function(data, nrows=10 ){
   
   return(items)
 }
-
-## test <- show_unique(strawb, 10)
-
-
 ```
 
 ```{r}
 #|label: split strawb into census and survey pieces
+#|warning: false
 
 strw_census <- strawb |> filter(Program == "CENSUS")
 
@@ -203,41 +117,39 @@ rm(s_census, s_survey, strawberry, strawb, items)
 
 ```{r}
 #| label: work on Census columns
+#| warning: false
 
-commod <- strw_census$Commodity |> unique()
+# Save a copy of the original for safety
+strw_census_orig <- strw_census
 
-#### split Data Item
+# Check column names
+names(strw_census)
 
+# First split Commodity
 strw_census <- strw_census |>
-  separate_wider_delim(  cols = Commodity,
-                         delim = ",",
-                         names = c("INCOME", 
-                                   "NET CASH FARM",
-                                   "STRAW"
-                                               ),
-                         too_many = "error",
-                         names_sep = " ",
-                         too_few = "align_start"
+  separate_wider_delim(
+    cols = Commodity,
+    delim = ",",
+    names = c("INCOME", "NET_CASH_FARM", "STRAW"),
+    too_few = "align_start",
+    too_many = "drop"
   )
 
-
-
-inc <- strw_census$Fruit |> unique()
-
 strw_census <- strw_census |>
-  separate_wider_delim(  cols = Fruit,
-                         delim = ",",
-                         names = c("INCOME", 
-                                   "STRAWB"
-                                               ),
-                         too_many = "error",
-                         too_few = "align_start"
+  separate_wider_delim(
+    cols = `Data Item`,
+    delim = ",",
+    names = c("Fruit", "Category", "Item"),
+    too_few = "align_start",
+    too_many = "merge"
   )
+
 
 ```
 
 ```{r}
 #| label: Assignment shortner results
+#| warning: false
 
 straw_cen_f <- strw_census |> filter(State == "FLORIDA")
 
@@ -248,3 +160,373 @@ straw_sur_c <- strw_survey |> filter(State == "CALIFORNIA")
 rm(strw_census, strw_survey, unique_cen, unique_sur)
 
 ```
+
+## **Methodology and Decision Rationale**
+
+**Chemical Selection:** I chose my three chemicals based on coverage across both states and agricultural relevance:
+
+-   **Abamectin**, an insecticide/miticide
+
+-   **Cyprodinil** and **Fludioxonil**, which are frequently co-applied (e.g., in Switch®)
+
+These choices allowed us to contrast insect vs. fungal control and observe whether California's higher production scale translated into greater chemical reliance.
+
+**Graph Type Choices:**
+
+-   **Bar Charts** visualize raw chemical usage by year and state
+
+-   **Stacked Bars** summarize aggregate chemical inputs by category
+
+-   **Proportion Charts** remove magnitude bias to compare relative usage
+
+-   **Percent Change Bars** capture trends across time
+
+-   **Scatter Plot** highlights the correlation between Cyprodinil and Fludioxonil
+
+-   **Lollipop Charts** and **summary tables** communicate pricing and revenue relationships clearly
+
+All graphs are faceted or colored by state to allow easy visual comparison.
+
+## Chemical Usage Comparison: Abamectin, Cyprodinil, and Fludioxonil
+
+To explore chemical usage patterns in strawberry production, we focus on three commonly applied pesticides: **Abamectin**, **Cyprodinil**, and **Fludioxonil**. These were selected based on their appearance in both California and Florida datasets, their agricultural importance, and their narrative potential.
+
+Together, this trio allows us to contrast **insect control versus fungal control**, **cross-state usage patterns**, and even **chemical pairings**.
+
+```{r}
+#| label: Choose and contrast unique chemicals
+#| warning: false
+
+# Combine all four into one data frame
+straw_all <- bind_rows(
+  straw_sur_c,
+  straw_sur_f,
+  straw_cen_c,
+  straw_cen_f
+)
+
+target_chems <- c(
+  "CHEMICAL, FUNGICIDE: (CYPRODINIL = 288202)",
+  "CHEMICAL, FUNGICIDE: (FLUDIOXONIL = 71503)",
+  "CHEMICAL, INSECTICIDE: (ABAMECTIN = 122804)"
+)
+
+chem_data <- straw_all |>
+  filter(`Domain Category` %in% target_chems) |>
+  mutate(Suppressed = Value == "(D)",
+         Value = ifelse(str_detect(Value, "^[0-9,]+$"),
+                        as.numeric(gsub(",", "", Value)),
+                        NA),
+         Chemical = case_when(
+            str_detect(`Domain Category`, "CYPRODINIL") ~ "Cyprodinil",
+            str_detect(`Domain Category`, "FLUDIOXONIL") ~ "Fludioxonil",
+            str_detect(`Domain Category`, "ABAMECTIN") ~ "Abamectin"
+    ))
+
+chem_data_clean <- chem_data |> drop_na(Value)
+
+ggplot(chem_data, aes(x = factor(Year), y = Value, fill = State)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ Chemical, scales = "free_y") +
+  labs(title = "Chemical Usage by State and Year",
+       x = "Year", y = "Usage (units in Value column)") +
+  theme_minimal()
+```
+
+**Figure 1: Chemical Usage by State and Year** California uses substantially more of all three chemicals, especially fungicides. This likely reflects larger-scale production and greater post-harvest preservation needs. Florida increased its use of Abamectin in 2023, possibly indicating rising pest pressure.
+
+The large gap between states in **Cyprodinil** and **Fludioxonil** usage could be due to differences in disease prevalence, shipping requirements (fungicides help reduce post-harvest decay), or product availability.
+
+```{r}
+#| label: proportional chemical comparison
+#| warning: false
+
+
+# Only keep rows with numeric Value and both states represented
+prop_data <- chem_data |> 
+  drop_na(Value) |> 
+  group_by(Chemical, Year) |> 
+  filter(n_distinct(State) == 2) |>  # Only keep years with both states
+  mutate(Share = Value / sum(Value))
+
+# Plot
+ggplot(prop_data, aes(x = factor(Year), y = Share, fill = State)) +
+  geom_col(position = "fill") +
+  facet_wrap(~ Chemical) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "Proportion of Chemical Usage by State",
+       y = "Share of Total Usage", x = "Year") +
+  theme_minimal()
+
+
+```
+
+**Figure 2: Proportional Usage by State** To remove the influence of scale and highlight relative usage, we visualize the proportional share of each chemical used by state. For Cyprodinil and Fludioxonil, California consistently accounts for 60–75% of total reported usage in both years. Interestingly, the percentage of Cyprodinil or Fludioxonil used by Florida decreased between 2021 and 2023, yet Florida's usage of Abamectin as an insecticide increased drastically. There may be a policy or environmental reason for this – we will look at it again in the conclusion.
+
+```{r}
+#| label: stacked chemical usage
+#| warning: false
+
+# Filter and clean chemical usage data
+chem_stacked <- chem_data_clean %>%
+  group_by(State, Year, Chemical) %>%
+  summarise(Total = sum(Value), .groups = "drop")
+
+# Plot: Stacked bars by chemical for California and Florida
+ggplot(chem_stacked, aes(x = factor(Year), y = Total, fill = Chemical)) +
+  geom_col() +
+  facet_wrap(~State) +
+  labs(
+    title = "Stacked Chemical Usage by State and Year",
+    x = "Year",
+    y = "Total Usage",
+    fill = "Chemical"
+  ) +
+  theme_minimal()
+
+```
+
+**Figure 3: Stacked Usage by State** Total fungicide application surged in California between 2021 and 2023, driven by Cyprodinil. Florida's increase was more moderate, but the composition shifted slightly toward fungicides.
+
+```{r}
+#| label: percent change chemical summary
+#| warning: false
+
+# Summarize total usage by Chemical, State, and Year
+chem_summary <- chem_data_clean |>
+  group_by(Chemical, State, Year) |>
+  summarise(Total_Usage = sum(Value), .groups = "drop")
+
+# Pivot to wide format: separate 2021 and 2023 into columns
+chem_wide <- chem_summary |>
+  filter(Year %in% c(2021, 2023)) |>  # Only focus on years with data
+  pivot_wider(names_from = Year, values_from = Total_Usage, 
+              names_prefix = "Year_") |>
+  drop_na()
+
+# Calculate absolute and percent change
+chem_change <- chem_wide |>
+  mutate(
+    Absolute_Change = Year_2023 - Year_2021,
+    Percent_Change = 100 * (Year_2023 - Year_2021) / Year_2021
+  )
+
+# Plot percent change (from 2021 to 2023)
+library(ggplot2)
+
+ggplot(chem_change, aes(x = Chemical, y = Percent_Change, fill = State)) +
+  geom_col(position = "dodge") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text(
+    aes(label = paste0(round(Percent_Change, 1), "%")),
+    position = position_dodge(width = 0.9),
+    vjust = ifelse(chem_change$Percent_Change >= 0, -0.5, 1.5),
+    size = 3.5
+  ) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  labs(
+    title = "Change in Chemical Usage from 2021 to 2023",
+    x = "Chemical",
+    y = "Percent Change from 2021",
+    fill = "State"
+  ) +
+  theme_minimal()
+```
+
+**Figure 4: Percent Change in Chemical Usage** Florida's Abamectin usage exploded (+1528%), starting from a small base, as we previously observed in figure 2. California saw steady increases in all three, notably a +197% jump in Fludioxonil.
+
+```{r}
+#| label: chemical usage table
+#| warning: false
+
+
+chem_change |>
+  select(Chemical, State, Year_2021, Year_2023, Absolute_Change, Percent_Change) |>
+  mutate(across(c(Year_2021, Year_2023, Absolute_Change), round, 0),
+         Percent_Change = round(Percent_Change, 1)) |>
+  arrange(Chemical, State) |>
+  kable(
+    caption = "Chemical Usage in 2021 and 2023 with Absolute and Percent Change",
+    col.names = c("Chemical", "State", "2021 Usage", "2023 Usage", "Change", "Percent Change"),
+    align = c("l", "r", "r", "r", "r", "r")
+  ) |>
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+```
+
+**Figure 5: Chemical Usage Table** The table confirms trends: California's values are orders of magnitude higher. Still, Florida’s absolute increases are notable given its smaller industry size.
+
+```{r}
+#| label: Cyprodinil and fludioxonil correlation
+#| warning: false
+
+
+cypro_fludiox <- chem_data |> 
+  filter(Chemical %in% c("Cyprodinil", "Fludioxonil")) |>
+  drop_na(Value) |>
+  group_by(Year, State, Chemical) |>
+  summarise(Total = sum(Value), .groups = "drop") |>
+  pivot_wider(names_from = Chemical, values_from = Total) |> 
+  drop_na()
+
+ggplot(cypro_fludiox, aes(x = Cyprodinil, y = Fludioxonil, color = State)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlation Between Cyprodinil and Fludioxonil Usage",
+       x = "Cyprodinil (units)", y = "Fludioxonil (units)") +
+  theme_minimal()
+
+
+```
+
+**Figure 6: Correlation Between Cyprodinil and Fludioxonil** A strong linear relationship supports the hypothesis that these fungicides are co-applied. This applies in both states, though California uses much more overall.
+
+## **Strawberry Price and Volume Comparison: Focus on Organic**
+
+In the second half of the analysis, we focus on organic strawberries to explore production efficiency and market trends. Organic data were more consistently reported and include clear sales and acreage information, making it possible to derive additional metrics. Specifically, we calculated:
+
+-   **Yield (CWT per Acre)** = Volume / Acres
+
+-   **Revenue per Acre** = Revenue / Acres
+
+-   **Price per CWT** = Revenue / Volume
+
+These derived metrics allow us to compare not just raw outputs, but production efficiency and profitability across California and Florida. While both states grow organic strawberries, their practices and market strategies differ significantly. Organic strawberries also offer a cleaner lens for comparison, since they exclude some of the chemical usage confounding present in conventional data.
+
+```{r}
+#| label: Organic data prep
+#| warning: false
+
+organic_data <- straw_all %>%
+  filter(str_detect(Category, "ORGANIC"))
+
+organic_data <- organic_data %>%
+  mutate(
+    Category = str_trim(Category),
+    Value_num = as.numeric(gsub(",", "", Value))
+  ) %>%
+  filter(str_detect(Category, "ORGANIC")) %>%
+  mutate(
+    Metric = case_when(
+      str_detect(Category, "ACRES HARVESTED") ~ "Acres",
+      str_detect(Category, "SALES") & str_detect(Item, "\\$") ~ "Revenue",
+      str_detect(Category, "SALES") & str_detect(Item, "CWT") ~ "Volume",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(Metric)) %>%
+  select(Year, State, Metric, Value_num) %>%
+  pivot_wider(names_from = Metric, values_from = Value_num)
+
+organic_metrics <- organic_data %>%
+  mutate(
+    Yield_CWT_per_Acre = Volume / Acres,
+    Revenue_per_Acre = Revenue / Acres,
+    Price_per_CWT = Revenue / Volume
+  )
+```
+
+```{r}
+#| label: Organic strawberry price lollipop graph
+#| warning: false
+
+
+lollipop_data <- organic_metrics %>%
+  pivot_longer(cols = c(Revenue_per_Acre, Price_per_CWT), names_to = "Metric", values_to = "Value")
+
+ggplot(lollipop_data, aes(x = State, y = Value, color = State)) +
+  geom_segment(aes(xend = State, y = 0, yend = Value), size = 1) +
+  geom_point(size = 4) +
+  facet_wrap(~Metric, scales = "free_y") +
+  labs(
+    title = "Organic Strawberry Price and Revenue by State",
+    y = "Value",
+    x = ""
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+**Figure 7: Organic Price and Revenue by State** Florida commands a higher price per CWT, but California achieves significantly more revenue per acre due to its much higher yields.
+
+```{r}
+#| label: Organic yield and price per state
+#| warning: false
+
+
+ratio_data <- organic_metrics %>%
+  select(State, Yield_CWT_per_Acre, Price_per_CWT) %>%
+  pivot_longer(cols = c(Yield_CWT_per_Acre, Price_per_CWT), names_to = "Metric", values_to = "Value")
+
+ggplot(ratio_data, aes(x = Metric, y = Value, fill = State)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Yield and Price Comparison per State (Organic Strawberries)",
+    x = "",
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+**Figure 8: Organic Yield and Price Comparison** The bar chart clearly shows Florida’s price advantage but also its yield disadvantage. California’s yield per acre is more than triple Florida’s.
+
+```{r}
+#| label: Organic summary table
+#| warning: false
+
+
+organic_summary <- organic_metrics |>
+  group_by(State, Year) |>
+  summarise(
+    Avg_Price_CWT = mean(Price_per_CWT, na.rm = TRUE),
+    Avg_Yield = mean(Yield_CWT_per_Acre, na.rm = TRUE),
+    Avg_Revenue = mean(Revenue_per_Acre, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Display as a table
+organic_summary |>
+  mutate(across(starts_with("Avg_"), round, 1)) |>
+  kable(
+    caption = "Average Organic Strawberry Metrics by State and Year",
+    col.names = c("State", "Year", "Avg. Price per CWT", "Avg. Yield (CWT/Acre)", "Avg. Revenue per Acre"),
+    align = c("l", "c", "r", "r", "r")
+  ) |>
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover"))
+
+```
+
+**Figure 9: Summary Table - Organic Metrics** Florida's 2021 average price per CWT is \$273.40 compared to California’s \$220.70, but yield and revenue lag far behind. California earns \$73,742 per acre versus Florida’s \$26,077.
+
+## **Conclusion and Insights**
+
+California's strawberry industry is not just larger but also characterized by intensive chemical usage, particularly fungicides. This aligns with its role as the top strawberry-producing state in the U.S., responsible for nearly 90% of all strawberries grown domestically (USDA, 2022). The scale of California's production likely necessitates greater pest and disease management, particularly to meet strict export and shelf-life standards (Bolda et al., 2017). This explains the higher levels of Cyprodinil and Fludioxonil used in California compared to Florida.
+
+Florida's smaller-scale strawberry industry, while still significant, appears to focus on earlier-season market windows and fresh-market premiums. Its notably higher price per CWT for organic strawberries may reflect these marketing advantages, as well as a shorter supply chain and regional demand. However, Florida's significantly lower yields limit its per-acre revenue. This suggests that while Florida benefits from higher unit prices, it lacks the production scale and efficiency of California.
+
+The explosive rise in Abamectin usage in Florida may indicate changing pest pressures or evolving integrated pest management strategies, possibly in response to warmer winters and increased mite activity (Smith & Noling, 2021). Meanwhile, California’s continued investment in fungicide co-application likely reflects systemic practices built into commercial operations, packing houses, and export logistics.
+
+Organic strawberry metrics further underscore the economic advantage of California’s high-yield systems. Despite earning less per unit, California’s total revenue per acre far surpasses Florida’s, a result of substantially higher productivity.
+
+Taken together, these patterns suggest that climate, market orientation, infrastructure, and agronomic conditions all influence how states manage chemical inputs and achieve profitability in strawberry production.
+
+*References:*
+
+-   USDA National Agricultural Statistics Service (2022). "Strawberries, Annual Summary."
+
+-   Bolda, M., Klonsky, K., & De Moura, R. (2017). "Sample Costs to Produce and Harvest Strawberries: Central Coast. UC Cooperative Extension."
+
+-   Smith, H. & Noling, J. (2021). "Strawberry Production in Florida." University of Florida IFAS Extension.
+
+### **Limitations and Considerations**
+
+-   **Missing Data:** Many cells were suppressed ("(D)") or reported inconsistently across years.
+
+-   **Metric Derivation:** Yield and revenue were inferred from other fields, introducing compounded uncertainty.
+
+-   **Survey vs. Census Blending:** Merging these sources may hide reporting biases.
+
+-   **No Acre-Specific Chemical Data:** Without knowing how many acres were treated, usage figures may exaggerate or understate per-acre intensity.
+
+Despite these challenges, the patterns revealed are consistent, logical, and well-supported by the data available.
+
+*All data from USDA NASS. Charts and analysis generated in R using tidyverse and ggplot2. Coding support and discussion guidance provided by ChatGPT.*
